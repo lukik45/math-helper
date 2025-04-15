@@ -50,7 +50,7 @@ async def health_check():
     }
 
 # Include API routes
-app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(auth.router, prefix="/api")
 # Will uncomment as we implement these routers
 # app.include_router(curriculum.router, prefix="/api/curriculum", tags=["Curriculum"])
 # app.include_router(problems.router, prefix="/api/problems", tags=["Problems"])

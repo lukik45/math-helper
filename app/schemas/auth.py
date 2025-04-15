@@ -1,49 +1,40 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field
 
 
 class UserBase(BaseModel):
-    """Base user schema with shared attributes"""
-    username: str = Field(..., min_length=3, max_length=50)
+    username: str
     email: EmailStr
-    grade_level: Optional[int] = Field(None, ge=1, le=12)
 
 
 class UserCreate(UserBase):
-    """Schema for user creation with password"""
-    password: str = Field(..., min_length=8)
+    password: str
+    grade_level: Optional[int] = None
 
 
-class UserUpdate(BaseModel):
-    """Schema for user updates"""
-    username: Optional[str] = Field(None, min_length=3, max_length=50)
-    email: Optional[EmailStr] = None
-    grade_level: Optional[int] = Field(None, ge=1, le=12)
-    is_active: Optional[bool] = None
-    password: Optional[str] = Field(None, min_length=8)
+class UserLogin(BaseModel):
+    username: str
+    password: str
 
 
-class UserResponse(UserBase):
-    """Schema for user response data"""
+class UserProfile(UserBase):
     id: int
-    is_active: bool
+    grade_level: Optional[int] = None
     created_at: datetime
     last_login: Optional[datetime] = None
-    
+
     class Config:
         from_attributes = True
 
 
 class Token(BaseModel):
-    """Schema for authentication token"""
     access_token: str
-    token_type: str
+    token_type: str = "bearer"
     user_id: int
 
 
 class TokenPayload(BaseModel):
-    """Schema for token payload"""
     sub: Optional[int] = None
-    exp: Optional[datetime] = None
+    exp: Optional[int] = None

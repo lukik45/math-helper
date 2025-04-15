@@ -555,7 +555,7 @@ def auth_page():
                 st.session_state.user_id = data["user_id"]
                 st.session_state.token = data["token"]
                 st.session_state.logged_in = True
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.error("Login failed. Please check your credentials.")
     
@@ -590,7 +590,7 @@ def problem_page():
             if response.status_code == 200:
                 solution_data = response.json()
                 st.session_state.current_solution = solution_data
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.error("Error generating solution")
 ```
@@ -619,7 +619,7 @@ def solution_page():
                 with col2:
                     if st.button("Show me the solution", key=f"show_{i}"):
                         st.session_state[f"show_solution_{i}"] = True
-                        st.experimental_rerun()
+                        st.rerun()
             
             with tab2:
                 if st.session_state.get(f"show_solution_{i}", False):
