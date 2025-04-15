@@ -7,7 +7,8 @@ from loguru import logger
 
 from app import __version__
 from app.core.config import settings
-from app.db.base import init_db
+from app.db.base import init_db, should_create_sample_data
+# Import API routers
 from app.api import auth
 
 
@@ -50,6 +51,7 @@ async def health_check():
 
 # Include API routes
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+# Will uncomment as we implement these routers
 # app.include_router(curriculum.router, prefix="/api/curriculum", tags=["Curriculum"])
 # app.include_router(problems.router, prefix="/api/problems", tags=["Problems"])
 # app.include_router(progress.router, prefix="/api/progress", tags=["Progress"])
@@ -75,7 +77,12 @@ async def general_exception_handler(request, exc):
 async def startup_event():
     logger.info("Initializing application...")
     try:
-        init_db()
+        # Initialize databases with sample data if needed
+        create_sample_data = should_create_sample_data()
+        if create_sample_data:
+            logger.info("Sample data creation enabled")
+        
+        init_db(create_sample_data=create_sample_data)
         logger.info("Application startup complete")
     except Exception as e:
         logger.error(f"Startup failed: {str(e)}")

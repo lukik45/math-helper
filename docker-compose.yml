@@ -9,6 +9,8 @@ services:
       - ./:/app
     env_file:
       - .env
+    environment:
+      - CREATE_SAMPLE_DATA=true
     depends_on:
       - postgres
       - neo4j
@@ -30,7 +32,7 @@ services:
       - api
     networks:
       - app-network
-    command: streamlit run frontend/1_🏠_Home.py
+    command: streamlit run frontend/pages/1_🏠_Home.py
 
   postgres:
     image: postgres:14
@@ -44,6 +46,11 @@ services:
       - postgres-data:/var/lib/postgresql/data
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   neo4j:
     image: neo4j:4.4
@@ -52,10 +59,17 @@ services:
       - "7687:7687"  # Bolt
     environment:
       - NEO4J_AUTH=${NEO4J_USER}/${NEO4J_PASSWORD}
+      - NEO4J_dbms_memory_heap_initial__size=512m
+      - NEO4J_dbms_memory_heap_max__size=1G
     volumes:
       - neo4j-data:/data
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:7474"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 networks:
   app-network:
