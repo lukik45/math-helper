@@ -2,7 +2,7 @@ from loguru import logger
 import os
 
 # Import database modules
-from app.db.postgres import init_postgres_db, SessionLocal
+from app.db.sqlite import init_sqlite_db, SessionLocal
 from app.db.neo4j import init_neo4j_db
 
 
@@ -11,8 +11,8 @@ def init_db(create_sample_data=False):
     logger.info("Initializing databases...")
     
     try:
-        # Initialize PostgreSQL
-        init_postgres_db()
+        # Initialize SQLite
+        init_sqlite_db()
         
         # Initialize Neo4j
         init_neo4j_db()
@@ -43,5 +43,5 @@ def should_create_sample_data():
 
 
 # Export base models and session utilities for convenience
-from app.db.postgres import Base, get_db
+from app.db.sqlite import Base, get_db
 from app.db.neo4j import neo4j_db

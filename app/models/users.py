@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Float, ForeignKey, UniqueConstraint
 from sqlalchemy.sql import func
 
-from app.db.postgres import Base
+from app.db.sqlite import Base
 
 
 class User(Base):
@@ -63,4 +63,4 @@ class UserSettings(Base):
     hint_preference = Column(Boolean, default=True)
     notification_enabled = Column(Boolean, default=True)
     theme = Column(String(20), default="light")
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    updated_at = Column(DateTime, server_default=func.now())

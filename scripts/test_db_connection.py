@@ -19,6 +19,7 @@ load_dotenv()
 
 import logging
 from loguru import logger
+from sqlalchemy import text
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -26,17 +27,17 @@ logger.info("Testing database connections...")
 
 try:
     # Import database modules
-    from app.db.postgres import init_postgres_db, SessionLocal
+    from app.db.sqlite import init_sqlite_db, SessionLocal
     from app.db.neo4j import neo4j_db, init_neo4j_db
     
-    # Test PostgreSQL connection
-    logger.info("Testing PostgreSQL connection...")
-    init_postgres_db()
+    # Test SQLite connection
+    logger.info("Testing SQLite connection...")
+    init_sqlite_db()
     db = SessionLocal()
-    result = db.execute("SELECT 1").fetchone()
-    assert result[0] == 1, "PostgreSQL test query failed"
+    result = db.execute(text("SELECT 1")).fetchone()
+    assert result[0] == 1, "SQLite test query failed"
     db.close()
-    logger.info("✅ PostgreSQL connection successful!")
+    logger.info("✅ SQLite connection successful!")
     
     # Test Neo4j connection
     logger.info("Testing Neo4j connection...")
