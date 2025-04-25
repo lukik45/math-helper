@@ -27,13 +27,18 @@ app.dependency_overrides[get_db] = override_get_db
 # Apply mocks to bypass Neo4j connections
 @pytest.fixture(scope="module", autouse=True)
 def mock_neo4j():
-    with patch("app.db.neo4j.get_driver", return_value=MagicMock()):
-        with patch("app.db.neo4j.verify_curriculum_structure", return_value=True):
-            with patch("app.db.neo4j.create_curriculum_structure", return_value=True):
-                with patch("app.db.neo4j.init_neo4j_db", return_value=None):
-                    # Mock the startup event
-                    with patch("app.main.init_db", return_value=None):
-                        yield
+    # Create mock for Neo4jDatabase class
+    neo4j_db_mock = MagicMock()
+    neo4j_db_mock.get_driver.return_value = MagicMock()
+    neo4j_db_mock.verify_curriculum_structure.return_value = True
+    neo4j_db_mock.create_curriculum_structure.return_value = None
+    
+    # Patch the neo4j_db instance and init function
+    with patch("app.db.neo4j.neo4j_db", neo4j_db_mock):
+        with patch("app.db.neo4j.init_neo4j_db") as mock_init:
+            mock_init.return_value = None
+            yield
+
 
 @pytest.fixture(scope="module")
 def test_db():
