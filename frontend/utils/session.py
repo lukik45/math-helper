@@ -1,47 +1,25 @@
 import streamlit as st
-import time
-from datetime import datetime, timedelta
 
-def init_session():
-    """Initialize session state variables if they don't exist"""
-    if "init" not in st.session_state:
-        st.session_state.init = True
-        st.session_state.auth_time = time.time()
+def check_login_status():
+    """
+    Check if the user is logged in.
+    Returns True if logged in, False otherwise.
+    """
+    # Ensure we have consistent session state
+    if "logged_in" not in st.session_state:
+        st.session_state.logged_in = False
         
-        # Authentication state
-        if "user_authenticated" not in st.session_state:
-            st.session_state.user_authenticated = False
-        if "user_token" not in st.session_state:
-            st.session_state.user_token = None
-        if "user_id" not in st.session_state:
-            st.session_state.user_id = None
-        if "username" not in st.session_state:
-            st.session_state.username = None
-            
-        # Problem solving state
-        if "current_problem" not in st.session_state:
-            st.session_state.current_problem = None
-        if "current_solution" not in st.session_state:
-            st.session_state.current_solution = None
-
-
-def check_token_expiry():
-    """Check if the authentication token has expired (30 minutes)"""
-    if "auth_time" in st.session_state and st.session_state.user_authenticated:
-        current_time = time.time()
-        # If more than 30 minutes have passed, log the user out
-        if current_time - st.session_state.auth_time > 30 * 60:
-            logout()
-            st.warning("Your session has expired. Please log in again.")
-            return False
-        # Refresh the auth time if still active
-        st.session_state.auth_time = current_time
-    return True
-
+    # If token exists but logged_in flag is False, correct it
+    if "token" in st.session_state and not st.session_state.logged_in:
+        st.session_state.logged_in = True
+        
+    return st.session_state.get("logged_in", False)
 
 def logout():
-    """Log out the current user"""
-    st.session_state.user_authenticated = False
-    st.session_state.user_token = None
-    st.session_state.user_id = None
-    st.session_state.username = None
+    """
+    Log out the user by clearing session state.
+    """
+    for key in ["user_id", "token", "logged_in", "username", "grade_level", 
+                "current_solution", "selected_problem"]:
+        if key in st.session_state:
+            del st.session_state[key]

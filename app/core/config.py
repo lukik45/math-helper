@@ -1,53 +1,49 @@
 import os
-from typing import List, Optional, Union
+import logging
+from dotenv import load_dotenv
 
-from pydantic import AnyHttpUrl, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
+# Load environment variables
+load_dotenv()
 
-class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", case_sensitive=True, extra="ignore")
-
-    # API Settings
-    API_HOST: str = "0.0.0.0"
-    API_PORT: int = 8000
+class Settings:
     PROJECT_NAME: str = "AI Math Tutor"
+    PROJECT_VERSION: str = "0.1.0"
     
-    # CORS Settings - default to allowing local development URLs
-    BACKEND_CORS_ORIGINS: Union[str, List[str]] = ["http://localhost:8501", "http://localhost:8000"]
-
-    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
-    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
-        if isinstance(v, str):
-            if v.startswith("[") and v.endswith("]"):
-                # Handle JSON-formatted string: '["http://localhost", "https://localhost"]'
-                import json
-                return json.loads(v)
-            else:
-                # Handle comma-separated string: "http://localhost,https://localhost"
-                return [i.strip() for i in v.split(",")]
-        elif isinstance(v, list):
-            return v
-        # Default to allowing localhost if value is invalid
-        return ["http://localhost:8501", "http://localhost:8000"]
-
-    # Security
-    SECRET_KEY: str = "your_secret_key_change_this_in_production"
-    JWT_ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    # API Settings
+    API_V1_STR: str = "/api"
     
-    # Database
-    # Using SQLite instead of PostgreSQL
-    SQLALCHEMY_DATABASE_URI: str = "sqlite:///./app.db"
+    # Secret Key for JWT
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "supersecretkey")
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 1 day
     
+    # Database Settings
+    SQLITE_DATABASE_URL: str = os.getenv("SQLITE_DATABASE_URL", "sqlite:///./mathtutor.db")
+    NEO4J_URI: str = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+    NEO4J_USER: str = os.getenv("NEO4J_USER", "neo4j")
+    NEO4J_PASSWORD: str = os.getenv("NEO4J_PASSWORD", "password")
+    
+    # OpenAI Settings
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
 
-    # Neo4j - Explicitly use localhost and default Neo4j credentials
-    NEO4J_URI: str = "bolt://localhost:7687"
-    NEO4J_USER: str = "neo4j"
-    NEO4J_PASSWORD: str = "password"
-    # OpenAI
-    OPENAI_API_KEY: str = "your_openai_api_key_here"
-
-
-# Create settings instance
 settings = Settings()
+
+# Check critical settings
+if not settings.OPENAI_API_KEY:
+    logger.warning("========== WARNING ==========")
+    logger.warning("OPENAI_API_KEY is not set! The solution generation will not work.")
+    logger.warning("Please set the OPENAI_API_KEY environment variable or add it to your .env file.")
+    logger.warning("============================")
+
+if settings.SECRET_KEY == "supersecretkey":
+    logger.warning("You are using the default SECRET_KEY. This is not secure for production.")
+
+# Log other important settings
+logger.info(f"Database URL: {settings.SQLITE_DATABASE_URL}")
+logger.info(f"Neo4j URI: {settings.NEO4J_URI}")
+logger.info(f"API prefix: {settings.API_V1_STR}")
+logger.info(f"OpenAI API key set: {bool(settings.OPENAI_API_KEY)}")  # Don't log the actual key

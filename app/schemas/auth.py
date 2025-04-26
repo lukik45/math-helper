@@ -1,17 +1,25 @@
-from datetime import datetime
 from typing import Optional
+from pydantic import BaseModel, EmailStr
 
-from pydantic import BaseModel, EmailStr, Field
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    user_id: int
+
+
+class TokenData(BaseModel):
+    user_id: Optional[int] = None
 
 
 class UserBase(BaseModel):
     username: str
     email: EmailStr
+    grade_level: Optional[int] = None
 
 
 class UserCreate(UserBase):
     password: str
-    grade_level: Optional[int] = None
 
 
 class UserLogin(BaseModel):
@@ -19,22 +27,8 @@ class UserLogin(BaseModel):
     password: str
 
 
-class UserProfile(UserBase):
+class UserResponse(UserBase):
     id: int
-    grade_level: Optional[int] = None
-    created_at: datetime
-    last_login: Optional[datetime] = None
 
     class Config:
-        from_attributes = True
-
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
-    user_id: int
-
-
-class TokenPayload(BaseModel):
-    sub: Optional[int] = None
-    exp: Optional[int] = None
+        orm_mode = True

@@ -1,99 +1,58 @@
-import logging
-
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from loguru import logger
 
-from app import __version__
 from app.core.config import settings
-from app.db.base import init_db, should_create_sample_data
-# Import API routers
-from app.api import auth
+from app.api import auth, problems, progress, curriculum
+from app.db.base import Base, engine
 
+# Create tables
+Base.metadata.create_all(bind=engine)
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger.info(f"Starting AI Math Tutor API v{__version__}")
-
-# Initialize FastAPI app
 app = FastAPI(
-    title="AI Math Tutor API",
-    description="API for AI Math Tutor application connecting problem-solving with curriculum",
-    version=__version__,
+    title=settings.PROJECT_NAME,
+    version=settings.PROJECT_VERSION,
+    openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
-# Add CORS middleware
+# Set up CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
+    allow_origins=["*"],  # For development only - restrict in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Root endpoint
+# Include routers
+app.include_router(
+    auth.router,
+    prefix=f"{settings.API_V1_STR}/auth",
+    tags=["Authentication"]
+)
+
+app.include_router(
+    problems.router,
+    prefix=f"{settings.API_V1_STR}/problems",
+    tags=["Problems"]
+)
+
+app.include_router(
+    progress.router,
+    prefix=f"{settings.API_V1_STR}/progress",
+    tags=["Progress"]
+)
+
+app.include_router(
+    curriculum.router,
+    prefix=f"{settings.API_V1_STR}/curriculum",
+    tags=["Curriculum"]
+)
+
 @app.get("/")
-async def root():
-    return {
-        "message": "Welcome to AI Math Tutor API",
-        "version": __version__,
-        "docs_url": "/docs"
-    }
+def read_root():
+    return {"message": "Welcome to AI Math Tutor API"}
 
-# Health check endpoint
-@app.get("/health")
-async def health_check():
-    return {
-        "status": "healthy",
-        "version": __version__
-    }
-
-# Include API routes
-app.include_router(auth.router, prefix="/api")
-# Will uncomment as we implement these routers
-# app.include_router(curriculum.router, prefix="/api/curriculum", tags=["Curriculum"])
-# app.include_router(problems.router, prefix="/api/problems", tags=["Problems"])
-# app.include_router(progress.router, prefix="/api/progress", tags=["Progress"])
-
-# Exception handlers
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request, exc):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.detail},
-    )
-
-@app.exception_handler(Exception)
-async def general_exception_handler(request, exc):
-    logger.error(f"Unhandled exception: {str(exc)}")
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal server error"},
-    )
-
-# Startup event
-@app.on_event("startup")
-async def startup_event():
-    logger.info("Initializing application...")
-    try:
-        # Initialize databases with sample data if needed
-        create_sample_data = should_create_sample_data()
-        if create_sample_data:
-            logger.info("Sample data creation enabled")
-        
-        init_db(create_sample_data=create_sample_data)
-        logger.info("Application startup complete")
-    except Exception as e:
-        logger.error(f"Startup failed: {str(e)}")
-        raise
-
-# Shutdown event
-@app.on_event("shutdown")
-async def shutdown_event():
-    logger.info("Shutting down application...")
-    # Close any open connections here
-
+# For debugging purposes, include a file for running the app
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host=settings.API_HOST, port=settings.API_PORT)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
